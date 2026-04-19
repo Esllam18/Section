@@ -1,118 +1,128 @@
 // lib/features/language/presentation/view/language_selection_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../core/animations/app_animations.dart';
 import '../../../../core/animations/app_durations.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/helpers/onboarding_cache_helper.dart';
-import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/navigation.dart';
 import '../../../../core/responsive/responsive_extension.dart';
+import '../../../../core/theme/theme_cubit.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../widgets/language_card_widget.dart';
+import '../../../../core/widgets/gap.dart';
+import '../../../../core/widgets/section_logo.dart';
+import '../cubit/language_cubit.dart';
+import '../widgets/lang_card.dart';
+import '../widgets/theme_picker.dart';
 
-class LanguageSelectionView extends StatefulWidget {
+class LanguageSelectionView extends StatelessWidget {
   const LanguageSelectionView({super.key});
+
   @override
-  State<LanguageSelectionView> createState() => _LanguageSelectionViewState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) => LanguageCubit(),
+    child: const _Body(),
+  );
 }
 
-class _LanguageSelectionViewState extends State<LanguageSelectionView> {
-  String _selected = 'ar';
+class _Body extends StatelessWidget {
+  const _Body();
 
-  Future<void> _onContinue() async {
-    await context.read<LocaleCubit>().changeLanguage(_selected);
-    if (!mounted) return;
+  Future<void> _onContinue(BuildContext context, LanguageState st) async {
+    await context.read<LocaleCubit>().changeLanguage(st.lang);
+    await context.read<ThemeCubit>().setThemeMode(st.theme);
+    if (!context.mounted) return;
     final seen = await OnboardingCacheHelper.isOnboardingSeen();
     Navigation.offAllNamed(seen ? AppRoutes.login : AppRoutes.onboarding);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: context.rSymmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            children: [
-              const Spacer(),
-              AppAnimations.combined(
-                type: CombineType.fadeScale,
-                duration: AppDurations.short,
-                beginScale: 0.5,
-                child: Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.language_rounded,
-                      size: 40, color: AppColors.primary),
-                ),
-              ),
-              const SizedBox(height: 28),
-              AppAnimations.combined(
-                type: CombineType.fadeSlide,
-                duration: AppDurations.short,
-                delay: const Duration(milliseconds: 150),
-                direction: SlideDirection.up,
-                slideDistance: 20,
-                child: Text('select_language'.tr(context),
-                    style: theme.textTheme.headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                    textAlign: TextAlign.center),
-              ),
-              const SizedBox(height: 10),
-              AppAnimations.fade(
-                duration: AppDurations.short,
-                delay: const Duration(milliseconds: 250),
-                child: Text(
-                  'select_language_subtitle'.tr(context),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55)),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const Spacer(),
-              AppAnimations.combined(
-                type: CombineType.fadeSlide,
-                duration: AppDurations.short,
-                delay: const Duration(milliseconds: 350),
-                direction: SlideDirection.up,
-                slideDistance: 30,
+    return BlocBuilder<LanguageCubit, LanguageState>(builder: (ctx, st) {
+      final isAR = st.lang == 'ar';
+      final theme = Theme.of(ctx);
+
+      return Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: context.rSym(h: 24, v: 20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+
+              Gap(ctx.h(0.025)),
+
+              // Logo
+              AppAnimations.fadeScale(duration: AppDurations.slow, beginScale: 0.5,
+                child: Center(child: SectionLogo(size: 68,
+                  bgColor: theme.colorScheme.primary.withOpacity(0.1),
+                  crossColor: theme.colorScheme.primary))),
+
+              const Gap(22),
+
+              // Title — dynamically language-aware
+              AppAnimations.fadeSlide(duration: AppDurations.slow,
+                delay: const Duration(milliseconds: 100), dir: SlideDir.up, dist: 18,
+                child: Text(isAR ? 'اختر لغتك' : 'Choose Your Language',
+                  style: theme.textTheme.headlineMedium, textAlign: TextAlign.center)),
+
+              const Gap(8),
+
+              AppAnimations.fade(duration: AppDurations.slow, delay: const Duration(milliseconds: 150),
+                child: Text(isAR ? 'ستُطبَّق على كامل التطبيق' : 'This will apply across the entire app',
+                  style: theme.textTheme.bodySmall, textAlign: TextAlign.center)),
+
+              Gap(ctx.r(28)),
+
+              // Language cards
+              AppAnimations.fadeSlide(duration: AppDurations.slow,
+                delay: const Duration(milliseconds: 180), dir: SlideDir.up, dist: 22,
                 child: Column(children: [
-                  LanguageCardWidget(
-                    code: 'ar', label: 'Arabic', nativeLabel: 'العربية',
-                    flagEmoji: '🇪🇬', isSelected: _selected == 'ar',
-                    onTap: () => setState(() => _selected = 'ar'),
-                  ),
-                  const SizedBox(height: 14),
-                  LanguageCardWidget(
-                    code: 'en', label: 'English', nativeLabel: 'English',
-                    flagEmoji: '🇬🇧', isSelected: _selected == 'en',
-                    onTap: () => setState(() => _selected = 'en'),
-                  ),
-                ]),
-              ),
-              const Spacer(),
-              AppAnimations.combined(
-                type: CombineType.fadeSlide,
-                duration: AppDurations.short,
-                delay: const Duration(milliseconds: 500),
-                direction: SlideDirection.up,
-                slideDistance: 20,
+                  LangCard(code: 'ar', native: 'العربية', label: 'Arabic',
+                    emoji: '🇪🇬', selected: st.lang == 'ar',
+                    onTap: () => ctx.read<LanguageCubit>().selectLang('ar')),
+                  const Gap(12),
+                  LangCard(code: 'en', native: 'English', label: 'الإنجليزية',
+                    emoji: '🇺🇸', selected: st.lang == 'en',
+                    onTap: () => ctx.read<LanguageCubit>().selectLang('en')),
+                ])),
+
+              Gap(ctx.r(24)),
+
+              // Divider with label
+              AppAnimations.fade(duration: AppDurations.slow, delay: const Duration(milliseconds: 260),
+                child: Row(children: [
+                  const Expanded(child: Divider()),
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(isAR ? 'المظهر' : 'Appearance',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.45)))),
+                  const Expanded(child: Divider()),
+                ])),
+
+              const Gap(16),
+
+              // Theme picker
+              AppAnimations.fadeSlide(duration: AppDurations.slow,
+                delay: const Duration(milliseconds: 320), dir: SlideDir.up, dist: 16,
+                child: ThemePicker(selected: st.theme, isAR: isAR,
+                  onChange: (m) => ctx.read<LanguageCubit>().selectTheme(m))),
+
+              Gap(ctx.r(36)),
+
+              // Continue button — label changes with lang
+              AppAnimations.fadeSlide(duration: AppDurations.slow,
+                delay: const Duration(milliseconds: 400), dir: SlideDir.up, dist: 14,
                 child: CustomButton(
-                    label: 'continue'.tr(context), onTap: _onContinue),
-              ),
-              const SizedBox(height: 16),
-            ],
+                  label: isAR ? 'متابعة' : 'Continue',
+                  onTap: () => _onContinue(ctx, st),
+                  trailing: Icon(isAR ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                    color: Colors.white, size: 18))),
+
+              const Gap(16),
+            ]),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

@@ -1,83 +1,78 @@
 // lib/core/widgets/custom_text_field.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:section/core/constants/app_colors.dart';
 
 class CustomTextField extends StatefulWidget {
-  final String hint;
   final String? label;
+  final String? hint;
   final TextEditingController? controller;
   final bool isPassword;
   final TextInputType keyboardType;
-  final TextInputAction textInputAction;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final void Function(String)? onSubmitted;
-  final Widget? prefixIcon;
-  final Widget? suffixIcon;
-  final bool readOnly;
+  // Support both prefixIcon (IconData) and prefix (Widget)
+  final IconData? prefixIcon;
+  final Widget? prefix;
+  final Widget? suffix;
   final int maxLines;
-  final List<TextInputFormatter>? inputFormatters;
+  final bool readOnly;
+  final VoidCallback? onTap;
   final FocusNode? focusNode;
-  final bool autofocus;
+  final TextInputAction? textInputAction;
 
   const CustomTextField({
-    super.key,
-    required this.hint,
-    this.label,
-    this.controller,
-    this.isPassword = false,
-    this.keyboardType = TextInputType.text,
-    this.textInputAction = TextInputAction.next,
-    this.validator,
-    this.onChanged,
-    this.onSubmitted,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.readOnly = false,
-    this.maxLines = 1,
-    this.inputFormatters,
-    this.focusNode,
-    this.autofocus = false,
+    super.key, this.label, this.hint, this.controller,
+    this.isPassword = false, this.keyboardType = TextInputType.text,
+    this.validator, this.onChanged, this.onSubmitted,
+    this.prefixIcon, this.prefix, this.suffix, this.maxLines = 1,
+    this.readOnly = false, this.onTap, this.focusNode, this.textInputAction,
   });
 
-  @override
-  State<CustomTextField> createState() => _CustomTextFieldState();
+  @override State<CustomTextField> createState() => _CustomTextFieldState();
 }
 
 class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscure = true;
 
+  Widget? _buildPrefix() {
+    if (widget.prefix != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: widget.prefix,
+      );
+    }
+    if (widget.prefixIcon != null) {
+      return Icon(widget.prefixIcon, color: AppColors.textSecondaryLight, size: 20);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isPass = widget.isPassword;
-
     return TextFormField(
       controller: widget.controller,
-      obscureText: isPass ? _obscure : false,
+      obscureText: widget.isPassword && _obscure,
       keyboardType: widget.keyboardType,
-      textInputAction: widget.textInputAction,
       validator: widget.validator,
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onSubmitted,
+      maxLines: widget.isPassword ? 1 : widget.maxLines,
       readOnly: widget.readOnly,
-      maxLines: isPass ? 1 : widget.maxLines,
-      inputFormatters: widget.inputFormatters,
+      onTap: widget.onTap,
       focusNode: widget.focusNode,
-      autofocus: widget.autofocus,
+      textInputAction: widget.textInputAction,
+      style: const TextStyle(fontFamily: 'Cairo', fontSize: 14),
       decoration: InputDecoration(
-        hintText: widget.hint,
         labelText: widget.label,
-        prefixIcon: widget.prefixIcon,
-        suffixIcon: isPass
+        hintText: widget.hint,
+        prefixIcon: _buildPrefix(),
+        suffixIcon: widget.isPassword
             ? IconButton(
-                icon: Icon(
-                  _obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                  size: 20,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-                ),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              )
-            : widget.suffixIcon,
+                icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: AppColors.textSecondaryLight, size: 20),
+                onPressed: () => setState(() => _obscure = !_obscure))
+            : widget.suffix,
       ),
     );
   }

@@ -5,13 +5,7 @@ import '../models/profile_model.dart';
 
 class ProfileRepository {
   final _ds = ProfileDataSource();
-
-  Future<void> upsertProfile(ProfileModel profile) =>
-      _ds.upsertProfile(profile);
-
-  Future<ProfileModel?> getProfile(String userId) =>
-      _ds.getProfile(userId);
-
-  Future<String> uploadAvatar(String userId, File file) =>
-      _ds.uploadAvatar(userId, file);
+  Future<void> upsert(ProfileModel p)      => _ds.upsert(p);
+  Future<ProfileModel?> get(String uid)    => _ds.get(uid);
+  Future<String> uploadAvatar(String uid, File f) => _ds.uploadAvatar(uid, f);
 }

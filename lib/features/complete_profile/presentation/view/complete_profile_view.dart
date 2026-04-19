@@ -1,307 +1,281 @@
-// lib/features/complete_profile/presentation/view/complete_profile_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../core/animations/app_animations.dart';
 import '../../../../core/animations/app_durations.dart';
-import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/helpers/validators.dart';
+import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/navigation.dart';
 import '../../../../core/responsive/responsive_extension.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_snackbar.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/gap.dart';
 import '../cubit/complete_profile_cubit.dart';
-import '../widgets/avatar_picker_widget.dart';
+import '../widgets/avatar_picker.dart';
+import '../widgets/profile_dropdown.dart';
 
 class CompleteProfileView extends StatefulWidget {
   const CompleteProfileView({super.key});
-
   @override
-  State<CompleteProfileView> createState() => _CompleteProfileViewState();
+  State<CompleteProfileView> createState() => _State();
 }
 
-class _CompleteProfileViewState extends State<CompleteProfileView> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-
-  String? _selectedCollege;
-  String? _selectedYear;
-
-  static const _colleges = [
-    'Medicine',
-    'Dentistry',
-    'Pharmacy',
-    'Nursing',
-    'Physical Therapy',
-    'Health Sciences',
-    'Other',
-  ];
-
-  static const _years = [
-    'Year 1',
-    'Year 2',
-    'Year 3',
-    'Year 4',
-    'Year 5',
-    'Year 6',
-    'Internship',
-  ];
+class _State extends State<CompleteProfileView> {
+  final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  final _bio = TextEditingController();
+  String? _college, _year, _gender;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _phoneCtrl.dispose();
+    _name.dispose();
+    _phone.dispose();
+    _bio.dispose();
     super.dispose();
   }
 
-  void _onSave() {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedCollege == null) {
-      CustomSnackBar.show(context,
-          message: 'college_required'.tr(context), type: SnackBarType.warning);
+  // ── Localised lists ────────────────────────────────────────────────────────
+  List<String> _colleges(bool ar) => ar
+      ? [
+          'الطب البشري',
+          'طب الأسنان',
+          'الصيدلة',
+          'التمريض',
+          'العلاج الطبيعي',
+          'العلوم الصحية',
+          'الطب البيطري',
+          'أخرى',
+        ]
+      : [
+          'Medicine',
+          'Dentistry',
+          'Pharmacy',
+          'Nursing',
+          'Physical Therapy',
+          'Health Sciences',
+          'Veterinary',
+          'Other',
+        ];
+
+  List<String> _years(bool ar) => ar
+      ? [
+          'السنة الأولى',
+          'السنة الثانية',
+          'السنة الثالثة',
+          'السنة الرابعة',
+          'السنة الخامسة',
+          'السنة السادسة',
+          'الامتياز'
+        ]
+      : [
+          'Year 1',
+          'Year 2',
+          'Year 3',
+          'Year 4',
+          'Year 5',
+          'Year 6',
+          'Internship'
+        ];
+
+  List<String> _genders(bool ar) => ar
+      ? ['ذكر', 'أنثى', 'أفضل عدم الإفصاح']
+      : ['Male', 'Female', 'Prefer not to say'];
+
+  void _submit(bool isAR) {
+    if (!_form.currentState!.validate()) return;
+    if (_college == null) {
+      AppSnackBar.show(context,
+          type: SnackType.warning,
+          message: isAR ? 'يرجى اختيار الكلية' : 'Please select your college');
       return;
     }
-    if (_selectedYear == null) {
-      CustomSnackBar.show(context,
-          message: 'year_required'.tr(context), type: SnackBarType.warning);
+    if (_year == null) {
+      AppSnackBar.show(context,
+          type: SnackType.warning,
+          message:
+              isAR ? 'يرجى اختيار سنة الدراسة' : 'Please select your year');
       return;
     }
-    context.read<CompleteProfileCubit>().saveProfile(
-          fullName: _nameCtrl.text,
-          phone: _phoneCtrl.text,
-          college: _selectedCollege!,
-          yearOfStudy: _selectedYear!,
-        );
+    context.read<CompleteProfileCubit>().save(
+        fullName: _name.text,
+        phone: _phone.text.trim().isEmpty ? null : _phone.text,
+        bio: _bio.text.trim().isEmpty ? null : _bio.text,
+        college: _college!,
+        yearOfStudy: _year!,
+        gender: _gender);
   }
+
+  Widget _animated({required int delayMs, required Widget child}) =>
+      AppAnimations.fadeSlide(
+          duration: AppDurations.slow,
+          delay: Duration(milliseconds: delayMs),
+          dir: SlideDir.up,
+          dist: 16,
+          child: child);
 
   @override
   Widget build(BuildContext context) {
+    final isAR = context.watch<LocaleCubit>().isArabic;
     final theme = Theme.of(context);
 
     return BlocListener<CompleteProfileCubit, CompleteProfileState>(
-      listener: (context, state) {
-        if (state is CompleteProfileSuccess) {
+      listener: (ctx, st) {
+        if (st is CompleteProfileSuccess) {
           Navigation.offAllNamed(AppRoutes.home);
-        } else if (state is CompleteProfileError) {
-          CustomSnackBar.show(context,
-              message: state.message, type: SnackBarType.error);
-        }
+        } else if (st is CompleteProfileError)
+          AppSnackBar.show(ctx, message: st.message, type: SnackType.error);
       },
       child: Scaffold(
+        appBar: AppBar(
+            title: Text(isAR ? 'أكمل ملفك الشخصي' : 'Complete Profile'),
+            automaticallyImplyLeading: false),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: context.rSymmetric(horizontal: 24, vertical: 24),
+            padding: context.rSym(h: 24, v: 20),
             child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: context.r(16)),
+                key: _form,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Subtitle
+                    _animated(
+                        delayMs: 0,
+                        child: Text(
+                            isAR
+                                ? 'ساعدنا في تخصيص تجربتك.'
+                                : 'Help us personalise your experience.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.55)),
+                            textAlign: TextAlign.center)),
 
-                  // ── Title ─────────────────────────────────────────────────
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    direction: SlideDirection.up,
-                    slideDistance: 20,
-                    child: Column(
-                      children: [
-                        Text(
-                          'complete_profile'.tr(context),
-                          style: theme.textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'complete_profile_subtitle'.tr(context),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.55)),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
+                    Gap(context.r(22)),
 
-                  SizedBox(height: context.r(28)),
+                    // Avatar
+                    _animated(
+                        delayMs: 60,
+                        child: Center(
+                            child: BlocBuilder<CompleteProfileCubit,
+                                    CompleteProfileState>(
+                                builder: (ctx, st) => AvatarPicker(
+                                    image: st is ProfileImagePicked
+                                        ? st.file
+                                        : ctx
+                                            .read<CompleteProfileCubit>()
+                                            .pickedImage,
+                                    onTap: () => ctx
+                                        .read<CompleteProfileCubit>()
+                                        .pickImage())))),
 
-                  // ── Avatar picker ─────────────────────────────────────────
-                  AppAnimations.combined(
-                    type: CombineType.fadeScale,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 120),
-                    beginScale: 0.7,
-                    child: Center(
-                      child: BlocBuilder<CompleteProfileCubit,
-                          CompleteProfileState>(
-                        builder: (context, state) => AvatarPickerWidget(
-                          imageFile: state is CompleteProfileImagePicked
-                              ? state.imageFile
-                              : context
-                                  .read<CompleteProfileCubit>()
-                                  .pickedImage,
-                          onTap: () =>
-                              context.read<CompleteProfileCubit>().pickImage(),
-                        ),
-                      ),
-                    ),
-                  ),
+                    Gap(context.r(24)),
 
-                  SizedBox(height: context.r(28)),
+                    // Full name
+                    _animated(
+                        delayMs: 100,
+                        child: CustomTextField(
+                          hint: isAR ? 'الاسم الكامل' : 'Full name',
+                          controller: _name,
+                          prefix: const Icon(Icons.person_outline_rounded,
+                              size: 20),
+                          validator: (v) => Validators.fullName(v),
+                        )),
 
-                  // ── Full Name ─────────────────────────────────────────────
-                  _animatedField(
-                    delay: 180,
-                    child: CustomTextField(
-                      hint: 'full_name'.tr(context),
-                      controller: _nameCtrl,
-                      prefixIcon:
-                          const Icon(Icons.person_outline_rounded, size: 20),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'name_required'.tr(context)
-                          : null,
-                    ),
-                  ),
+                    Gap(context.r(14)),
 
-                  SizedBox(height: context.r(14)),
+                    // Phone
+                    _animated(
+                        delayMs: 150,
+                        child: CustomTextField(
+                          hint: isAR
+                              ? 'رقم الهاتف (اختياري)'
+                              : 'Phone number (optional)',
+                          controller: _phone,
+                          keyboardType: TextInputType.phone,
+                          prefix: const Icon(Icons.phone_outlined, size: 20),
+                          validator: Validators.phone,
+                        )),
 
-                  // ── Phone (optional) ──────────────────────────────────────
-                  _animatedField(
-                    delay: 240,
-                    child: CustomTextField(
-                      hint: 'phone_optional'.tr(context),
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      prefixIcon: const Icon(Icons.phone_outlined, size: 20),
-                    ),
-                  ),
+                    Gap(context.r(14)),
 
-                  SizedBox(height: context.r(14)),
+                    // College
+                    _animated(
+                        delayMs: 200,
+                        child: ProfileDropdown(
+                            hint: isAR ? 'اختر كليتك' : 'Select college',
+                            value: _college,
+                            icon: Icons.school_outlined,
+                            items: _colleges(isAR),
+                            onChanged: (v) => setState(() => _college = v))),
 
-                  // ── College Dropdown ──────────────────────────────────────
-                  _animatedField(
-                    delay: 300,
-                    child: _DropdownField(
-                      hint: 'select_college'.tr(context),
-                      value: _selectedCollege,
-                      icon: Icons.school_outlined,
-                      items: _colleges,
-                      onChanged: (v) => setState(() => _selectedCollege = v),
-                    ),
-                  ),
+                    Gap(context.r(14)),
 
-                  SizedBox(height: context.r(14)),
+                    // Year
+                    _animated(
+                        delayMs: 250,
+                        child: ProfileDropdown(
+                            hint: isAR ? 'سنة الدراسة' : 'Year of study',
+                            value: _year,
+                            icon: Icons.calendar_today_outlined,
+                            items: _years(isAR),
+                            onChanged: (v) => setState(() => _year = v))),
 
-                  // ── Year of Study ─────────────────────────────────────────
-                  _animatedField(
-                    delay: 360,
-                    child: _DropdownField(
-                      hint: 'select_year'.tr(context),
-                      value: _selectedYear,
-                      icon: Icons.calendar_today_outlined,
-                      items: _years,
-                      onChanged: (v) => setState(() => _selectedYear = v),
-                    ),
-                  ),
+                    Gap(context.r(14)),
 
-                  SizedBox(height: context.r(32)),
+                    // Gender
+                    _animated(
+                        delayMs: 300,
+                        child: ProfileDropdown(
+                            hint:
+                                isAR ? 'الجنس (اختياري)' : 'Gender (optional)',
+                            value: _gender,
+                            icon: Icons.wc_outlined,
+                            items: _genders(isAR),
+                            onChanged: (v) => setState(() => _gender = v))),
 
-                  // ── Save Button ───────────────────────────────────────────
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 420),
-                    direction: SlideDirection.up,
-                    slideDistance: 16,
-                    child:
-                        BlocBuilder<CompleteProfileCubit, CompleteProfileState>(
-                      builder: (_, state) => CustomButton(
-                        label: 'save_and_continue'.tr(context),
-                        onTap: _onSave,
-                        isLoading: state is CompleteProfileLoading,
-                      ),
-                    ),
-                  ),
+                    Gap(context.r(14)),
 
-                  SizedBox(height: context.r(16)),
+                    // Bio
+                    _animated(
+                        delayMs: 340,
+                        child: CustomTextField(
+                          hint: isAR
+                              ? 'نبذة عنك (اختياري)'
+                              : 'Short bio (optional)',
+                          controller: _bio,
+                          maxLines: 3,
+                          prefix: const Icon(Icons.edit_note_rounded, size: 20),
+                        )),
 
-                  // ── Skip ──────────────────────────────────────────────────
-                  AppAnimations.fade(
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 480),
-                    child: TextButton(
-                      onPressed: () => Navigation.offAllNamed(AppRoutes.home),
-                      child: Text('skip_for_now'.tr(context)),
-                    ),
-                  ),
+                    Gap(context.r(28)),
 
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
+                    // Save button
+                    _animated(
+                        delayMs: 400,
+                        child: BlocBuilder<CompleteProfileCubit,
+                                CompleteProfileState>(
+                            builder: (_, st) => CustomButton(
+                                label: isAR ? 'حفظ ومتابعة' : 'Save & Continue',
+                                onTap: () => _submit(isAR),
+                                isLoading: st is CompleteProfileLoading))),
+
+                    Gap(context.r(12)),
+
+                    // Skip
+                    _animated(
+                        delayMs: 440,
+                        child: TextButton(
+                            onPressed: () =>
+                                Navigation.offAllNamed(AppRoutes.home),
+                            child: Text(isAR ? 'تخطى الآن' : 'Skip for now'))),
+
+                    const Gap(20),
+                  ],
+                )),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _animatedField({required int delay, required Widget child}) =>
-      AppAnimations.combined(
-        type: CombineType.fadeSlide,
-        duration: AppDurations.short,
-        delay: Duration(milliseconds: delay),
-        direction: SlideDirection.up,
-        slideDistance: 18,
-        child: child,
-      );
-}
-
-// ── Reusable dropdown field ───────────────────────────────────────────────────
-class _DropdownField extends StatelessWidget {
-  final String hint;
-  final String? value;
-  final IconData icon;
-  final List<String> items;
-  final void Function(String?) onChanged;
-
-  const _DropdownField({
-    required this.hint,
-    required this.value,
-    required this.icon,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final inputTheme = theme.inputDecorationTheme;
-
-    return DropdownButtonFormField<String>(
-      value: value,
-      hint: Text(hint,
-          style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.45))),
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, size: 20),
-        filled: inputTheme.filled,
-        fillColor: inputTheme.fillColor,
-        enabledBorder: inputTheme.enabledBorder,
-        focusedBorder: inputTheme.focusedBorder,
-        border: inputTheme.border,
-        contentPadding: inputTheme.contentPadding,
-      ),
-      icon: Icon(Icons.keyboard_arrow_down_rounded,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-      dropdownColor: theme.cardTheme.color,
-      borderRadius: BorderRadius.circular(12),
-      items:
-          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-      onChanged: onChanged,
     );
   }
 }

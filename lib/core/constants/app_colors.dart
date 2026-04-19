@@ -1,58 +1,69 @@
 // lib/core/constants/app_colors.dart
-
 import 'package:flutter/material.dart';
 
-abstract final class AppColors {
-  // ── Brand ─────────────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF1A6FBF);
-  static const Color primaryLight = Color(0xFF4D9FE0);
-  static const Color primaryDark = Color(0xFF0D4A87);
+class AppColors {
+  // ── Brand Palette ─────────────────────────────────────────────────────────
+  static const Color primary        = Color(0xFF1565C0); // Deep Medical Blue
+  static const Color primaryLight   = Color(0xFF2979FF); // Vivid Blue
+  static const Color primaryDark    = Color(0xFF0D47A1); // Dark Navy Blue
+  static const Color secondary      = Color(0xFF00BCD4); // Cyan Teal
+  static const Color secondaryLight = Color(0xFF00E5FF); // Bright Cyan
+  static const Color secondaryDark  = Color(0xFF0097A7); // Deep Teal
+  static const Color accent         = Color(0xFFFF5252); // Medical Red
 
-  static const Color accent = Color(0xFF00BFA5);
-  static const Color accentLight = Color(0xFF5DF2D6);
-  static const Color accentDark = Color(0xFF008C78);
+  // ── Light Mode ─────────────────────────────────────────────────────────────
+  static const Color backgroundLight    = Color(0xFFF0F4FF);
+  static const Color surfaceLight       = Color(0xFFFFFFFF);
+  static const Color inputFillLight      = Color(0xFFEBF3FF);
+  static const Color cardLight          = Color(0xFFFFFFFF);
+  static const Color dividerLight       = Color(0xFFBBDEFB);
+  static const Color textPrimaryLight   = Color(0xFF0A1929);
+  static const Color textSecondaryLight = Color(0xFF546E7A);
+  static const Color textHintLight      = Color(0xFF90A4AE); // hint text light mode
 
-  // ── Neutrals ──────────────────────────────────────────────────────────────
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF0A0A0A);
+  // ── Dark Mode ──────────────────────────────────────────────────────────────
+  static const Color backgroundDark  = Color(0xFF050D1A);
+  static const Color surfaceDark     = Color(0xFF0D1B2E);
+  static const Color cardDark        = Color(0xFF132338);
+  static const Color dividerDark     = Color(0xFF1A3050);
+  static const Color textPrimaryDark    = Color(0xFFE3F2FD);
+  static const Color textSecondaryDark  = Color(0xFF7EA8C9);
+  static const Color textHintDark       = Color(0xFF4A6080); // hint text dark mode
 
-  static const Color grey50  = Color(0xFFF8F9FA);
-  static const Color grey100 = Color(0xFFF1F3F5);
-  static const Color grey200 = Color(0xFFE9ECEF);
-  static const Color grey300 = Color(0xFFDEE2E6);
-  static const Color grey400 = Color(0xFFCED4DA);
-  static const Color grey500 = Color(0xFFADB5BD);
-  static const Color grey600 = Color(0xFF6C757D);
-  static const Color grey700 = Color(0xFF495057);
-  static const Color grey800 = Color(0xFF343A40);
-  static const Color grey900 = Color(0xFF212529);
+  // ── Aliases for older view files ───────────────────────────────────────────
+  static const Color darkCard   = cardDark;
+  static const Color darkBorder = dividerDark;
+  static const Color grey200    = Color(0xFFEEEEEE);
+  static const Color white      = Color(0xFFFFFFFF);
+  static const Color black      = Color(0xFF050D1A);
+  static const Color darkBg     = Color(0xFF0D1117); // used in splash
 
   // ── Semantic ──────────────────────────────────────────────────────────────
-  static const Color success      = Color(0xFF2E7D32);
-  static const Color successLight = Color(0xFFE8F5E9);
-  static const Color error        = Color(0xFFC62828);
-  static const Color errorLight   = Color(0xFFFFEBEE);
-  static const Color warning      = Color(0xFFF57F17);
-  static const Color warningLight = Color(0xFFFFFDE7);
-  static const Color info         = Color(0xFF01579B);
-  static const Color infoLight    = Color(0xFFE1F5FE);
-
-  // ── Dark surfaces ─────────────────────────────────────────────────────────
-  static const Color darkBackground = Color(0xFF0F1117);
-  static const Color darkSurface    = Color(0xFF1A1D27);
-  static const Color darkCard       = Color(0xFF22263A);
-  static const Color darkBorder     = Color(0xFF2E3348);
+  static const Color success   = Color(0xFF00C853);
+  static const Color warning   = Color(0xFFFFAB00);
+  static const Color error     = Color(0xFFD50000);
+  static const Color info      = Color(0xFF2979FF);
+  static const Color infoLight = Color(0xFFE3F2FD);
 
   // ── Gradients ─────────────────────────────────────────────────────────────
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryDark, primary, accent],
+    colors: [Color(0xFF1565C0), Color(0xFF00BCD4)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-
   static const LinearGradient splashGradient = LinearGradient(
-    colors: [Color(0xFF0D4A87), Color(0xFF1A6FBF), Color(0xFF00BFA5)],
+    colors: [Color(0xFF050D1A), Color(0xFF1565C0), Color(0xFF00BCD4)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
+  );
+  static const LinearGradient heroGradient = LinearGradient(
+    colors: [Color(0xFF1565C0), Color(0xFF1976D2), Color(0xFF00BCD4)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  static const LinearGradient darkSurfaceGradient = LinearGradient(
+    colors: [Color(0xFF0D1B2E), Color(0xFF132338)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
 }

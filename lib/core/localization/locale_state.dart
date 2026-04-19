@@ -1,6 +1,7 @@
-part of 'locale_cubit.dart';
-
-class ChangeLocaleState {
+import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+class LocaleState extends Equatable {
   final Locale locale;
-  const ChangeLocaleState({required this.locale});
+  const LocaleState({required this.locale});
+  @override List<Object> get props => [locale];
 }

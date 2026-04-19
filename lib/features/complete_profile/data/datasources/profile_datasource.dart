@@ -5,34 +5,21 @@ import '../../../../core/constants/app_strings.dart';
 import '../models/profile_model.dart';
 
 class ProfileDataSource {
-  final _client = Supabase.instance.client;
+  final _sb = Supabase.instance.client;
 
-  Future<void> upsertProfile(ProfileModel profile) async {
-    await _client
-        .from(AppStrings.profilesTable)
-        .upsert(profile.toMap());
+  Future<void> upsert(ProfileModel p) =>
+      _sb.from(AppStrings.tProfiles).upsert(p.toMap());
+
+  Future<ProfileModel?> get(String uid) async {
+    final d = await _sb.from(AppStrings.tProfiles).select().eq('id', uid).maybeSingle();
+    return d == null ? null : ProfileModel.fromMap(d);
   }
 
-  Future<ProfileModel?> getProfile(String userId) async {
-    final data = await _client
-        .from(AppStrings.profilesTable)
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
-    if (data == null) return null;
-    return ProfileModel.fromMap(data);
-  }
-
-  Future<String> uploadAvatar(String userId, File file) async {
-    final ext = file.path.split('.').last;
-    final path = '$userId/avatar.$ext';
-
-    await _client.storage
-        .from(AppStrings.avatarsBucket)
+  Future<String> uploadAvatar(String uid, File file) async {
+    final ext  = file.path.split('.').last;
+    final path = '$uid/avatar.$ext';
+    await _sb.storage.from(AppStrings.bAvatars)
         .upload(path, file, fileOptions: const FileOptions(upsert: true));
-
-    return _client.storage
-        .from(AppStrings.avatarsBucket)
-        .getPublicUrl(path);
+    return _sb.storage.from(AppStrings.bAvatars).getPublicUrl(path);
   }
 }

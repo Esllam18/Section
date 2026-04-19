@@ -1,60 +1,15 @@
-// lib/core/widgets/custom_text.dart
 import 'package:flutter/material.dart';
-
 class CustomText extends StatelessWidget {
-  final String txt;
-  final int? maxLines;
-  final double? fontSize;
-  final FontWeight? fontWeight;
-  final Color? color;
-  final TextAlign? textAlign;
-  final TextOverflow? overflow;
-  final String? fontFamily;
-  final double? letterSpacing;
-  final FontStyle? fontStyle;
-  final TextStyle? style;
-
-  const CustomText({
-    super.key,
-    required this.txt,
-    this.maxLines,
-    this.fontSize,
-    this.fontWeight,
-    this.color,
-    this.textAlign,
-    this.overflow,
-    this.fontFamily,
-    this.letterSpacing,
-    this.fontStyle,
-    this.style,
-  });
-
+  final String text; final TextStyle? style; final TextAlign? textAlign;
+  final int? maxLines; final TextOverflow? overflow; final Color? color;
+  final double? fontSize; final FontWeight? fontWeight; final String? fontFamily;
+  const CustomText(this.text,{super.key,this.style,this.textAlign,this.maxLines,this.overflow,this.color,this.fontSize,this.fontWeight,this.fontFamily});
   @override
   Widget build(BuildContext context) {
-    final scaled = fontSize != null
-        ? MediaQuery.textScalerOf(context).scale(fontSize!)
-        : MediaQuery.textScalerOf(context).scale(
-            style?.fontSize ??
-                Theme.of(context).textTheme.bodyLarge?.fontSize ??
-                16,
-          );
-
-    final base = style ??
-        Theme.of(context).textTheme.bodyLarge!.copyWith(
-              fontSize: scaled,
-              fontWeight: fontWeight,
-              color: color,
-              fontFamily: fontFamily,
-              letterSpacing: letterSpacing,
-              fontStyle: fontStyle,
-            );
-
-    return Text(
-      txt,
-      maxLines: maxLines,
-      textAlign: textAlign,
-      overflow: overflow ?? TextOverflow.ellipsis,
-      style: base,
+    final base = (style ?? DefaultTextStyle.of(context).style).copyWith(
+      color: color, fontSize: fontSize, fontWeight: fontWeight,
+      fontFamily: fontFamily ?? 'Cairo',
     );
+    return Text(text, style: base, textAlign: textAlign, maxLines: maxLines, overflow: overflow);
   }
 }

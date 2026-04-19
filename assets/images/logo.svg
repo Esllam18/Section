@@ -1,0 +1,59 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1565C0;stop-opacity:1"/>
+      <stop offset="55%" style="stop-color:#1976D2;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#00BCD4;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="crossGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#E3F2FD;stop-opacity:0.95"/>
+    </linearGradient>
+    <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00E5FF;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#00BCD4;stop-opacity:1"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="400" height="400" rx="88" ry="88" fill="url(#bgGrad)" filter="url(#shadow)"/>
+
+  <!-- Inner subtle ring -->
+  <rect x="12" y="12" width="376" height="376" rx="78" ry="78"
+    fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.12"/>
+
+  <!-- Medical cross — vertical bar -->
+  <rect x="174" y="88" width="52" height="196" rx="14" fill="url(#crossGrad)"/>
+  <!-- Medical cross — horizontal bar -->
+  <rect x="88" y="174" width="196" height="52" rx="14" fill="url(#crossGrad)"/>
+
+  <!-- Pulse / heartbeat arc (stethoscope motif) -->
+  <path d="M 268 268 m -38 0 a 38 38 0 1 1 76 0 a 38 38 0 0 1 -24 35"
+    fill="none" stroke="url(#dotGrad)" stroke-width="5"
+    stroke-linecap="round" stroke-dasharray="55 85"/>
+
+  <!-- Teal accent dot (stethoscope head) -->
+  <circle cx="269" cy="269" r="20" fill="url(#dotGrad)" opacity="0.92"/>
+  <!-- Cross in dot -->
+  <rect x="263" y="260" width="12" height="18" rx="3" fill="white" opacity="0.85"/>
+  <rect x="260" y="263" width="18" height="12" rx="3" fill="white" opacity="0.85"/>
+
+  <!-- App name: Section (English) -->
+  <text x="200" y="362"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="34" font-weight="800"
+    fill="white" opacity="0.95"
+    text-anchor="middle"
+    letter-spacing="3">SECTION</text>
+
+  <!-- App name: سيكشن (Arabic) - smaller, above English -->
+  <text x="200" y="338"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="20" font-weight="700"
+    fill="white" opacity="0.75"
+    text-anchor="middle"
+    letter-spacing="1">سيكشن</text>
+</svg>

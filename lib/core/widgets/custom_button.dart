@@ -1,91 +1,95 @@
 // lib/core/widgets/custom_button.dart
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
-
-enum ButtonVariant { primary, outline, ghost }
+import 'package:section/core/constants/app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
-  final ButtonVariant variant;
   final bool isLoading;
+  final bool useGradient;
+  final bool isOutlined;
+  final Color? backgroundColor;
+  final Color? textColor;
   final double? width;
   final double height;
   final double borderRadius;
-  final Widget? prefixIcon;
-  final Widget? suffixIcon;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
+  final IconData? icon;
+  final Widget? trailing;   // ← NEW: widget shown after label
 
   const CustomButton({
     super.key,
     required this.label,
-    this.onTap,
-    this.variant = ButtonVariant.primary,
+    required this.onTap,
     this.isLoading = false,
-    this.width,
+    this.useGradient = false,
+    this.isOutlined = false,
+    this.backgroundColor,
+    this.textColor,
+    this.width = double.infinity,
     this.height = 52,
     this.borderRadius = 14,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.backgroundColor,
-    this.foregroundColor,
+    this.icon,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isPrimary = variant == ButtonVariant.primary;
-
-    final bg = backgroundColor ??
-        (isPrimary ? cs.primary : Colors.transparent);
-    final fg = foregroundColor ??
-        (isPrimary ? AppColors.white : cs.primary);
-
-    return GestureDetector(
-      onTap: isLoading ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: width ?? double.infinity,
-        height: height,
-        decoration: BoxDecoration(
-          color: bg,
+    if (isOutlined) {
+      return SizedBox(
+        width: width, height: height,
+        child: OutlinedButton(
+          onPressed: isLoading ? null : onTap,
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: backgroundColor ?? AppColors.primary, width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+          ),
+          child: _child(textColor ?? AppColors.primary),
+        ),
+      );
+    }
+    if (useGradient) {
+      return SizedBox(
+        width: width, height: height,
+        child: Material(
           borderRadius: BorderRadius.circular(borderRadius),
-          border: variant == ButtonVariant.outline
-              ? Border.all(color: cs.primary, width: 1.5)
-              : null,
+          child: InkWell(
+            onTap: isLoading ? null : onTap,
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(borderRadius),
+                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              child: Center(child: _child(Colors.white)),
+            ),
+          ),
         ),
-        child: Center(
-          child: isLoading
-              ? SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2.5, color: fg),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (prefixIcon != null) ...[
-                      prefixIcon!,
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      label,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: fg,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    if (suffixIcon != null) ...[
-                      const SizedBox(width: 8),
-                      suffixIcon!,
-                    ],
-                  ],
-                ),
+      );
+    }
+    return SizedBox(
+      width: width, height: height,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor ?? AppColors.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
+          minimumSize: Size(width ?? double.infinity, height),
         ),
+        child: _child(textColor ?? Colors.white),
       ),
     );
+  }
+
+  Widget _child(Color color) {
+    if (isLoading) {
+      return SizedBox(width: 22, height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2.5, valueColor: AlwaysStoppedAnimation(color)));
+    }
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      if (icon != null) ...[Icon(icon, color: color, size: 20), const SizedBox(width: 8)],
+      Text(label, style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700, fontSize: 16, color: color)),
+      if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+    ]);
   }
 }

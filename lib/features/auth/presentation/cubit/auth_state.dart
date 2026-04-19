@@ -1,24 +1,14 @@
 part of 'auth_cubit.dart';
-
-abstract class AuthState {
-  const AuthState();
-}
-
+abstract class AuthState { const AuthState(); }
 class AuthInitial extends AuthState {}
-
 class AuthLoading extends AuthState {}
-
 class AuthSuccess extends AuthState {
   final User user;
   final bool needsProfile;
-  const AuthSuccess({required this.user, required this.needsProfile});
+  const AuthSuccess(this.user, {required this.needsProfile});
 }
-
-class AuthError extends AuthState {
+class AuthFailure extends AuthState {
   final String message;
-  const AuthError(this.message);
+  const AuthFailure(this.message);
 }
-
-class AuthResetEmailSent extends AuthState {
-  const AuthResetEmailSent();
-}
+class AuthResetSent extends AuthState { const AuthResetSent(); }

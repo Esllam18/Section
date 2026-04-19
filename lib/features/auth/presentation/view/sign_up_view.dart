@@ -1,218 +1,237 @@
 // lib/features/auth/presentation/view/sign_up_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../core/animations/app_animations.dart';
 import '../../../../core/animations/app_durations.dart';
-import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/helpers/validators.dart';
+import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/navigation.dart';
 import '../../../../core/responsive/responsive_extension.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_snackbar.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/gap.dart';
 import '../cubit/auth_cubit.dart';
-import '../widgets/auth_header_widget.dart';
-import '../widgets/or_divider_widget.dart';
-import '../widgets/social_login_button_widget.dart';
+import '../widgets/auth_header.dart';
+import '../widgets/google_sign_in_button.dart';
+import '../widgets/or_divider.dart';
 
 class SignUpView extends StatefulWidget {
   const SignUpView({super.key});
-
   @override
-  State<SignUpView> createState() => _SignUpViewState();
+  State<SignUpView> createState() => _State();
 }
 
-class _SignUpViewState extends State<SignUpView> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
+class _State extends State<SignUpView> {
+  final _form = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _pass = TextEditingController();
+  final _confirm = TextEditingController();
+  final _passNode = FocusNode();
+  final _confirmNode = FocusNode();
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
-    _passCtrl.dispose();
-    _confirmCtrl.dispose();
+    _email.dispose();
+    _pass.dispose();
+    _confirm.dispose();
+    _passNode.dispose();
+    _confirmNode.dispose();
     super.dispose();
   }
 
-  void _onSignUp() {
-    if (!_formKey.currentState!.validate()) return;
-    context.read<AuthCubit>().signUp(
-          email: _emailCtrl.text.trim(),
-          password: _passCtrl.text.trim(),
-        );
+  void _submit() {
+    if (!_form.currentState!.validate()) return;
+    context
+        .read<AuthCubit>()
+        .signUp(email: _email.text.trim(), password: _pass.text);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isAR = context.watch<LocaleCubit>().isArabic;
+    final theme = Theme.of(context);
+
     return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (state is AuthSuccess) {
+      listener: (ctx, st) {
+        if (st is AuthSuccess) {
           Navigation.offAllNamed(AppRoutes.completeProfile);
-        } else if (state is AuthError) {
-          CustomSnackBar.show(context,
-              message: state.message, type: SnackBarType.error);
-        }
+        } else if (st is AuthFailure)
+          AppSnackBar.show(ctx, message: st.message, type: SnackType.error);
       },
       child: Scaffold(
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: context.rSymmetric(horizontal: 24, vertical: 24),
+            padding: context.rSym(h: 24, v: 20),
             child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: context.h(0.03)),
+                key: _form,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Gap(context.h(0.03)),
 
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    direction: SlideDirection.up,
-                    slideDistance: 24,
-                    child: AuthHeaderWidget(
-                      title: 'create_account'.tr(context),
-                      subtitle: 'sign_up_subtitle'.tr(context),
-                    ),
-                  ),
+                    AppAnimations.fadeSlide(
+                        duration: AppDurations.slow,
+                        dir: SlideDir.up,
+                        dist: 20,
+                        child: AuthHeader(
+                            title: isAR ? 'إنشاء حساب جديد' : 'Create Account',
+                            subtitle: isAR
+                                ? 'انضم إلى آلاف الطلاب اليوم'
+                                : 'Join thousands of students today')),
 
-                  SizedBox(height: context.r(32)),
+                    Gap(context.r(28)),
 
-                  // Email
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 100),
-                    direction: SlideDirection.up,
-                    slideDistance: 20,
-                    child: CustomTextField(
-                      hint: 'email'.tr(context),
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(Icons.email_outlined, size: 20),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'email_required'.tr(context);
-                        if (!v.contains('@')) return 'email_invalid'.tr(context);
-                        return null;
-                      },
-                    ),
-                  ),
+                    // Email
+                    AppAnimations.fadeSlide(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 80),
+                        dir: SlideDir.up,
+                        dist: 16,
+                        child: CustomTextField(
+                          hint: isAR ? 'البريد الإلكتروني' : 'Email address',
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          prefix: const Icon(Icons.email_outlined, size: 20),
+                          onSubmitted: (_) => _passNode.requestFocus(),
+                          validator: (v) => Validators.email(v,
+                              msg: isAR
+                                  ? 'البريد الإلكتروني مطلوب'
+                                  : 'Email is required'),
+                        )),
 
-                  SizedBox(height: context.r(14)),
+                    Gap(context.r(14)),
 
-                  // Password
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 170),
-                    direction: SlideDirection.up,
-                    slideDistance: 20,
-                    child: CustomTextField(
-                      hint: 'password'.tr(context),
-                      controller: _passCtrl,
-                      isPassword: true,
-                      prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'password_required'.tr(context);
-                        if (v.length < 6) return 'password_min'.tr(context);
-                        return null;
-                      },
-                    ),
-                  ),
+                    // Password
+                    AppAnimations.fadeSlide(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 140),
+                        dir: SlideDir.up,
+                        dist: 16,
+                        child: CustomTextField(
+                          hint: isAR ? 'كلمة المرور' : 'Password',
+                          controller: _pass,
+                          isPassword: true,
+                          focusNode: _passNode,
+                          textInputAction: TextInputAction.next,
+                          prefix:
+                              const Icon(Icons.lock_outline_rounded, size: 20),
+                          onSubmitted: (_) => _confirmNode.requestFocus(),
+                          validator: (v) => Validators.password(v,
+                              msg: isAR
+                                  ? 'كلمة المرور مطلوبة'
+                                  : 'Password is required'),
+                        )),
 
-                  SizedBox(height: context.r(14)),
+                    Gap(context.r(14)),
 
-                  // Confirm Password
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 240),
-                    direction: SlideDirection.up,
-                    slideDistance: 20,
-                    child: CustomTextField(
-                      hint: 'confirm_password'.tr(context),
-                      controller: _confirmCtrl,
-                      isPassword: true,
-                      textInputAction: TextInputAction.done,
-                      prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                      onSubmitted: (_) => _onSignUp(),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'password_required'.tr(context);
-                        if (v != _passCtrl.text) return 'passwords_not_match'.tr(context);
-                        return null;
-                      },
-                    ),
-                  ),
+                    // Confirm password
+                    AppAnimations.fadeSlide(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 190),
+                        dir: SlideDir.up,
+                        dist: 16,
+                        child: CustomTextField(
+                          hint: isAR ? 'تأكيد كلمة المرور' : 'Confirm password',
+                          controller: _confirm,
+                          isPassword: true,
+                          focusNode: _confirmNode,
+                          textInputAction: TextInputAction.done,
+                          prefix:
+                              const Icon(Icons.lock_outline_rounded, size: 20),
+                          onSubmitted: (_) => _submit(),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return isAR
+                                  ? 'الرجاء تأكيد كلمة المرور'
+                                  : 'Please confirm your password';
+                            }
+                            if (v != _pass.text) {
+                              return isAR
+                                  ? 'كلمتا المرور غير متطابقتين'
+                                  : 'Passwords do not match';
+                            }
+                            return null;
+                          },
+                        )),
 
-                  SizedBox(height: context.r(24)),
+                    // Password hint
+                    AppAnimations.fade(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 220),
+                        child: Padding(
+                            padding: const EdgeInsets.only(
+                                top: 8, left: 4, right: 4),
+                            child: Text(
+                                isAR
+                                    ? '• 8 أحرف على الأقل  • حرف كبير  • رقم واحد على الأقل'
+                                    : '• Min 8 chars  • One uppercase  • One number',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.4))))),
 
-                  // Sign Up Button
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 300),
-                    direction: SlideDirection.up,
-                    slideDistance: 16,
-                    child: BlocBuilder<AuthCubit, AuthState>(
-                      builder: (_, state) => CustomButton(
-                        label: 'sign_up'.tr(context),
-                        onTap: _onSignUp,
-                        isLoading: state is AuthLoading,
-                      ),
-                    ),
-                  ),
+                    Gap(context.r(20)),
 
-                  SizedBox(height: context.r(24)),
+                    // Sign up button
+                    AppAnimations.fadeSlide(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 260),
+                        dir: SlideDir.up,
+                        dist: 14,
+                        child: BlocBuilder<AuthCubit, AuthState>(
+                            builder: (_, st) => CustomButton(
+                                label: isAR ? 'إنشاء الحساب' : 'Create Account',
+                                onTap: _submit,
+                                isLoading: st is AuthLoading))),
 
-                  AppAnimations.fade(
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 360),
-                    child: const OrDividerWidget(),
-                  ),
+                    Gap(context.r(20)),
 
-                  SizedBox(height: context.r(20)),
+                    AppAnimations.fade(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 300),
+                        child: OrDivider(
+                            label: isAR
+                                ? 'أو تابع باستخدام'
+                                : 'Or continue with')),
 
-                  // Google
-                  AppAnimations.combined(
-                    type: CombineType.fadeSlide,
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 420),
-                    direction: SlideDirection.up,
-                    slideDistance: 16,
-                    child: BlocBuilder<AuthCubit, AuthState>(
-                      builder: (_, state) => SocialLoginButton(
-                        label: 'continue_google'.tr(context),
-                        iconPath:
-                            'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                        onTap: () => context.read<AuthCubit>().signInWithGoogle(),
-                        isLoading: state is AuthLoading,
-                      ),
-                    ),
-                  ),
+                    Gap(context.r(16)),
 
-                  SizedBox(height: context.r(32)),
+                    AppAnimations.fadeSlide(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 340),
+                        dir: SlideDir.up,
+                        dist: 14,
+                        child: BlocBuilder<AuthCubit, AuthState>(
+                            builder: (_, st) => GoogleSignInButton(
+                                label: isAR
+                                    ? 'المتابعة عبر جوجل'
+                                    : 'Continue with Google',
+                                isLoading: st is AuthLoading,
+                                onTap: () => context
+                                    .read<AuthCubit>()
+                                    .signInWithGoogle()))),
 
-                  // Login Link
-                  AppAnimations.fade(
-                    duration: AppDurations.short,
-                    delay: const Duration(milliseconds: 480),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('already_have_account'.tr(context),
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        TextButton(
-                          onPressed: () => Navigation.back(),
-                          child: Text('login'.tr(context)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                    Gap(context.r(28)),
+
+                    AppAnimations.fade(
+                        duration: AppDurations.slow,
+                        delay: const Duration(milliseconds: 400),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                  isAR
+                                      ? 'لديك حساب بالفعل؟'
+                                      : 'Already have an account?',
+                                  style: theme.textTheme.bodyMedium),
+                              TextButton(
+                                  onPressed: Navigation.back,
+                                  child: Text(isAR ? 'تسجيل الدخول' : 'Login')),
+                            ])),
+                  ],
+                )),
           ),
         ),
       ),

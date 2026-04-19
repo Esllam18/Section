@@ -1,28 +1,20 @@
-// lib/core/localization/locale_cubit.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../constants/app_strings.dart';
+import 'language_cache_helper.dart';
+import 'locale_state.dart';
 
-part 'locale_state.dart';
+class LocaleCubit extends Cubit<LocaleState> {
+  LocaleCubit() : super(const LocaleState(locale: Locale('ar')));
 
-class LocaleCubit extends Cubit<ChangeLocaleState> {
-  LocaleCubit() : super(const ChangeLocaleState(locale: Locale('ar')));
-
-  static const _supported = ['ar', 'en'];
+  bool get isArabic => state.locale.languageCode == 'ar';
 
   Future<void> getSavedLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final code = prefs.getString(AppStrings.kLanguageKey);
-    emit(ChangeLocaleState(
-        locale: Locale(_supported.contains(code) ? code! : 'ar')));
+    final lang = await LanguageCacheHelper.get();
+    emit(LocaleState(locale: Locale(lang ?? 'ar')));
   }
 
-  Future<void> changeLanguage(String code) async {
-    if (!_supported.contains(code)) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(AppStrings.kLanguageKey, code);
-    emit(ChangeLocaleState(locale: Locale(code)));
+  Future<void> changeLanguage(String lang) async {
+    await LanguageCacheHelper.save(lang);
+    emit(LocaleState(locale: Locale(lang)));
   }
 }
