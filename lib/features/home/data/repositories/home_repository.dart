@@ -20,24 +20,24 @@ class HomeRepository {
       _studyStats(uid),
     ]);
 
-    final profile        = results[0] as Map<String, dynamic>;
-    final cartCount      = results[1] as int;
-    final unreadNotifs   = results[2] as int;
-    final recentOrders   = results[3] as List<RecentOrderSummary>;
-    final recentPosts    = results[4] as List<RecentPostSummary>;
-    final studyStats     = results[5] as Map<String, int>;
+    final profile = results[0] as Map<String, dynamic>;
+    final cartCount = results[1] as int;
+    final unreadNotifs = results[2] as int;
+    final recentOrders = results[3] as List<RecentOrderSummary>;
+    final recentPosts = results[4] as List<RecentPostSummary>;
+    final studyStats = results[5] as Map<String, int>;
 
     return HomeSummaryModel(
-      fullName:            profile['full_name'] as String? ?? '',
-      faculty:             profile['faculty']   as String? ?? '',
-      academicYear:        profile['academic_year'] as int? ?? 1,
-      isProfileComplete:   profile['is_profile_complete'] as bool? ?? false,
-      cartCount:           cartCount,
+      fullName: profile['full_name'] as String? ?? '',
+      faculty: profile['faculty'] as String? ?? '',
+      academicYear: profile['academic_year'] as int? ?? 1,
+      isProfileComplete: profile['is_profile_complete'] as bool? ?? false,
+      cartCount: cartCount,
       unreadNotifications: unreadNotifs,
-      recentOrders:        recentOrders,
-      recentPosts:         recentPosts,
-      subjectCount:        studyStats['subjects'] ?? 0,
-      resourceCount:       studyStats['resources'] ?? 0,
+      recentOrders: recentOrders,
+      recentPosts: recentPosts,
+      subjectCount: studyStats['subjects'] ?? 0,
+      resourceCount: studyStats['resources'] ?? 0,
     );
   }
 
@@ -51,10 +51,7 @@ class HomeRepository {
   }
 
   Future<int> _cartCount(String uid) async {
-    final d = await _db
-        .from('cart_items')
-        .select('id')
-        .eq('user_id', uid);
+    final d = await _db.from('cart_items').select('id').eq('user_id', uid);
     return (d as List).length;
   }
 
@@ -74,7 +71,9 @@ class HomeRepository {
         .eq('user_id', uid)
         .order('created_at', ascending: false)
         .limit(3);
-    return (d as List<dynamic>).map((e) => RecentOrderSummary.fromJson(e as Map<String,dynamic>)).toList();
+    return (d as List)
+        .map((e) => RecentOrderSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<RecentPostSummary>> _recentPosts(String uid) async {
@@ -83,7 +82,9 @@ class HomeRepository {
         .select('id,title,post_type,upvote_count,comment_count,created_at')
         .order('created_at', ascending: false)
         .limit(3);
-    return (d as List<dynamic>).map((e) => RecentPostSummary.fromJson(e as Map<String,dynamic>)).toList();
+    return (d as List)
+        .map((e) => RecentPostSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Map<String, int>> _studyStats(String uid) async {
@@ -97,10 +98,8 @@ class HomeRepository {
       final faculty = profile?['faculty'] as String?;
       if (faculty == null) return {'subjects': 0, 'resources': 0};
 
-      final subjects = await _db
-          .from('subjects')
-          .select('id')
-          .eq('faculty', faculty);
+      final subjects =
+          await _db.from('subjects').select('id').eq('faculty', faculty);
       return {'subjects': (subjects as List).length, 'resources': 0};
     } catch (_) {
       return {'subjects': 0, 'resources': 0};

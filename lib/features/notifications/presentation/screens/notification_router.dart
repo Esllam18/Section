@@ -1,5 +1,4 @@
 // lib/features/notifications/presentation/screens/notification_router.dart
-import 'package:section/core/services/navigation/navigation.dart';
 import 'package:section/features/notifications/data/models/notification_model.dart';
 
 /// Maps a notification type / FCM payload to an in-app screen.

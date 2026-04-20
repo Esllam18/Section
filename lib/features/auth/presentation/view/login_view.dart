@@ -1,4 +1,3 @@
-// lib/features/auth/presentation/view/login_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/animations/app_animations.dart';
@@ -53,7 +52,7 @@ class _State extends State<LoginView> {
       listener: (ctx, st) {
         if (st is AuthSuccess) {
           Navigation.offAllNamed(
-              st.needsProfile ? AppRoutes.completeProfile : AppRoutes.home);
+              st.needsProfile ? AppRoutes.home : AppRoutes.home);
         } else if (st is AuthFailure) {
           AppSnackBar.show(ctx, message: st.message, type: SnackType.error);
         }

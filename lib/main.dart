@@ -1,55 +1,97 @@
 // lib/main.dart
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:section/core/localization/locale_state.dart';
+import 'package:section/core/navigation/app_route_map.dart';
+import 'package:section/core/theme/theme_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:section/app.dart';
-import 'package:section/core/config/app_config.dart';
-import 'package:section/core/localization/language_cache_helper.dart';
-import 'package:section/core/localization/locale_cubit.dart';
-import 'package:section/core/theme/theme_cubit.dart';
-import 'package:section/core/services/notification_service.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'firebase_options.dart';
+import 'core/constants/app_strings.dart';
+import 'core/localization/app_localizations.dart'; // AppLocalizationsSetup
+import 'core/localization/locale_cubit.dart';
+import 'core/navigation/app_routes.dart'; // route name constants only
+import 'core/services/navigation/navigation_service.dart'; // NavigationService.navigatorKey
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_cubit.dart';
 
-@pragma('vm:entry-point')
-Future<void> _firebaseBackgroundHandler(message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-}
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Supabase
   await Supabase.initialize(
-    url: AppConfig.supabaseUrl,
-    anonKey: AppConfig.supabaseAnonKey,
+    url: AppStrings.supabaseUrl,
+    anonKey: AppStrings.supabaseAnonKey,
   );
 
-  // Timeago locales
-  timeago.setLocaleMessages('ar', timeago.ArMessages());
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
-  // Notifications
-  await NotificationService.init(
-    backgroundHandler: _firebaseBackgroundHandler,
-  );
+  runApp(const SectionApp());
+}
 
-  // Load saved preferences
-  final prefs = await SharedPreferences.getInstance();
-  final savedTheme = prefs.getString('theme') ?? 'light';
-  await LanguageCacheHelper.get(); // warm cache
+class SectionApp extends StatelessWidget {
+  const SectionApp({super.key});
 
-  runApp(
-    MultiBlocProvider(
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => ThemeCubit()..loadTheme(savedTheme)),
         BlocProvider(create: (_) => LocaleCubit()..getSavedLanguage()),
+        BlocProvider(create: (_) => ThemeCubit()..getSavedTheme()),
       ],
-      child: const SectionApp(),
-    ),
-  );
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        // Only rebuild MaterialApp when dark/light actually changes
+        buildWhen: (prev, curr) => prev.isDark != curr.isDark,
+        builder: (_, themeState) {
+          // Sync status-bar icon brightness with current theme
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                themeState.isDark ? Brightness.light : Brightness.dark,
+          ));
+
+          return BlocBuilder<LocaleCubit, LocaleState>(
+            // Only rebuild MaterialApp when locale actually changes
+            buildWhen: (prev, curr) => prev.locale != curr.locale,
+            builder: (_, localeState) => MaterialApp(
+              title: AppStrings.appName,
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
+              themeMode: themeState.isDark ? ThemeMode.dark : ThemeMode.light,
+              locale: localeState.locale,
+
+              // ✅ FIX 1: use AppLocalizationsSetup (actual class name)
+              supportedLocales: AppLocalizationsSetup.supportedLocales,
+              localizationsDelegates:
+                  AppLocalizationsSetup.localizationsDelegates,
+
+              // ✅ FIX 2: key lives on NavigationService, not Navigation
+              navigatorKey: NavigationService.navigatorKey,
+
+              // ✅ FIX 3: AppRoutes has only string constants, no routes map.
+              //    Routes map is defined in AppRouteMap (new file below).
+              initialRoute: AppRoutes.home,
+              routes: AppRouteMap.routes,
+
+              builder: (context, child) {
+                // Clamp device text scale between 0.9× and 1.15×
+                final clampedScale = MediaQuery.of(context)
+                    .textScaler
+                    .scale(1.0)
+                    .clamp(0.9, 1.15);
+                return MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(clampedScale),
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

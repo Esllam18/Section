@@ -24,7 +24,9 @@ class ProductRepository {
     final data = await q
         .order(sortBy, ascending: false)
         .range(page * _pageSize, (page + 1) * _pageSize - 1);
-    return (data as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String,dynamic>)).toList();
+    return (data as List<dynamic>)
+        .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<ProductModel>> searchProducts(String query) async {
@@ -34,16 +36,17 @@ class ProductRepository {
         .eq('is_active', true)
         .or('name_en.ilike.%$query%,name_ar.ilike.%$query%')
         .limit(20);
-    return (data as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String,dynamic>)).toList();
+    return (data as List<dynamic>)
+        .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<ProductModel> getById(String id) async =>
-      ProductModel.fromJson(
-          await _db.from('products').select().eq('id', id).single());
+  Future<ProductModel> getById(String id) async => ProductModel.fromJson(
+      await _db.from('products').select().eq('id', id).single());
 
   Future<List<CategoryModel>> getCategories() async =>
       (await _db.from('categories').select().order('sort_order'))
-          .map((e) => CategoryModel.fromJson(e as Map<String,dynamic>))
+          .map((e) => CategoryModel.fromJson(e))
           .toList();
 
   Future<List<ProductModel>> getFacultyPriority(String faculty) async {
@@ -67,8 +70,10 @@ class ProductRepository {
         .not('category_id', 'in', '(${ids.join(',')})')
         .limit(12);
     return [
-      ...(priority as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String,dynamic>)),
-      ...(others as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String,dynamic>)),
+      ...(priority as List<dynamic>)
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>)),
+      ...(others as List<dynamic>)
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>)),
     ];
   }
 }

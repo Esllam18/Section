@@ -10,10 +10,10 @@ import 'package:section/core/widgets/cached_image_widget.dart';
 import 'package:section/core/widgets/custom_button.dart';
 import 'package:section/core/widgets/empty_state_widget.dart';
 import 'package:section/core/widgets/loading_widget.dart';
-import 'package:section/features/store/data/models/cart_item_model.dart';
+import 'package:section/features/cart/data/models/cart_item_model.dart';
+import 'package:section/features/checkout/presentation/screens/checkout_screen.dart';
 import 'package:section/features/store/data/repositories/cart_repository.dart';
 import 'package:section/features/store/presentation/cubit/cart_cubit.dart';
-import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -75,8 +75,7 @@ class _CartBody extends StatelessWidget {
                       child: ListView.separated(
                         padding: const EdgeInsets.all(AppSizes.md),
                         itemCount: items.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 10),
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (ctx, i) => _CartTile(
                           item: items[i],
                           isAr: isAr,
@@ -87,7 +86,7 @@ class _CartBody extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _CartSummary(state: state as CartLoaded, isAr: isAr),
+                    _CartSummary(state: state, isAr: isAr),
                   ],
                 ),
               _ => const SizedBox.shrink(),
@@ -101,7 +100,7 @@ class _CartBody extends StatelessWidget {
 
 // ── Cart tile ─────────────────────────────────────────────────────────────────
 class _CartTile extends StatelessWidget {
-  final CartItemModel item;
+  final item;
   final bool isAr;
   final VoidCallback onRemove;
   final ValueChanged<int> onQtyChange;
@@ -130,8 +129,7 @@ class _CartTile extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: CachedImageWidget(
-                imageUrl: p.thumb, width: 72, height: 72),
+            child: CachedImageWidget(imageUrl: p.thumb, width: 72, height: 72),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -206,7 +204,7 @@ class _Btn extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(icon, size: 16, color: AppColors.primary),
@@ -246,7 +244,10 @@ class _CartSummary extends StatelessWidget {
           CustomButton(
             label: isAr ? 'المتابعة للدفع' : 'Proceed to Checkout',
             useGradient: true,
-            onTap: () => Navigation.to(CheckoutScreen(cartItems: state.items)),
+            onTap: () => Navigation.to(CheckoutScreen(
+              items: state.items.cast<CartItemModel>(),
+              total: state.total,
+            )),
           ),
         ],
       ),
@@ -267,8 +268,7 @@ class _Row extends StatelessWidget {
               style: TextStyle(
                   fontFamily: 'Cairo',
                   fontSize: bold ? 15 : 13,
-                  fontWeight:
-                      bold ? FontWeight.w700 : FontWeight.w400,
+                  fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
                   color: bold ? null : AppColors.textSecondaryLight)),
           Text(value,
               style: TextStyle(

@@ -52,7 +52,7 @@ class CommunityRepository {
           .select('*,profiles(id,full_name,avatar_url)')
           .eq('post_id', postId)
           .order('created_at'))
-      .map((e) => CommentModel.fromJson(e as Map<String, dynamic>))
+      .map((e) => CommentModel.fromJson(e))
       .toList();
 
   Future<CommentModel> addComment({
